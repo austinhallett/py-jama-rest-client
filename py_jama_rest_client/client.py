@@ -11,6 +11,7 @@ from py_jama_rest_client.exceptions import (
     UnauthorizedException,
 )
 from py_jama_rest_client.core import Core
+from typing import Optional
 
 # This is the py_jama_rest_client logger.
 py_jama_rest_client_logger = logging.getLogger("py_jama_rest_client")
@@ -79,7 +80,10 @@ class JamaClient:
         return response.json()["data"]
 
     def get_baselines(
-        self, project_id, allowed_results_per_page=__allowed_results_per_page
+        self,
+        project_id,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """
         Returns a list of Baseline objects
@@ -90,15 +94,20 @@ class JamaClient:
         Returns: a list of Baseline objects
         """
         resource_path = "baselines"
-        params = {"project": project_id}
-        baseline_data = self.__get_all(
+
+        params = (
+            {"project": project_id}
+            if params is None
+            else {**params, "project": project_id}
+        )
+
+        return self.__get_all(
             resource_path,
             params=params,
             allowed_results_per_page=allowed_results_per_page,
         )
-        return baseline_data
 
-    def get_baseline(self, baseline_id):
+    def get_baseline(self, baseline_id: int, params: Optional[dict] = None):
         """
         This method will return a baseline
         Args:
@@ -109,7 +118,7 @@ class JamaClient:
         """
         resource_path = "baselines/" + str(baseline_id)
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
@@ -117,7 +126,10 @@ class JamaClient:
         return response.json()["data"]
 
     def get_baselines_versioneditems(
-        self, baseline_id, allowed_results_per_page=__allowed_results_per_page
+        self,
+        baseline_id,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """
         Get all baseline items in a baseline with the specified ID
@@ -127,13 +139,15 @@ class JamaClient:
         Returns: A list of versioned items belonging to the baseline
         """
         resource_path = "baselines/" + str(baseline_id) + "/versioneditems"
-        baseline_items = self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+        return self.__get_all(
+            resource_path,
+            params,
+            allowed_results_per_page=allowed_results_per_page,
         )
-        return baseline_items
 
     def get_projects(
         self,
+        params: Optional[dict] = None,
         allowed_results_per_page=__allowed_results_per_page,
     ):
         """
@@ -144,13 +158,11 @@ class JamaClient:
         :Returns: JSON Array of Item Objects.
         """
         resource_path = "projects"
-
-        project_data = self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+        return self.__get_all(
+            resource_path, params, allowed_results_per_page=allowed_results_per_page
         )
-        return project_data
 
-    def get_project_by_id(self, project_id):
+    def get_project_by_id(self, project_id: int, params: Optional[dict] = None):
         """
         This method will return a single project as JSON object
         Args:
@@ -161,7 +173,7 @@ class JamaClient:
         """
         resource_path = f"projects/{project_id}"
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise ResourceNotFoundException(str(err))
@@ -172,6 +184,7 @@ class JamaClient:
         self,
         filter_id,
         project_id=None,
+        params: Optional[dict] = None,
         allowed_results_per_page=__allowed_results_per_page,
     ):
         """
@@ -187,18 +200,22 @@ class JamaClient:
 
         """
         resource_path = "filters/" + str(filter_id) + "/results"
-        params = None
-        if project_id is not None:
-            params = {"project": str(project_id)}
-        filter_results = self.__get_all(
+        params = (
+            {"project": str(project_id)}
+            if params is None
+            else {**params, "project": project_id}
+        )
+        return self.__get_all(
             resource_path,
-            params=params,
+            params,
             allowed_results_per_page=allowed_results_per_page,
         )
-        return filter_results
 
     def get_items(
-        self, project_id, allowed_results_per_page=__allowed_results_per_page
+        self,
+        project_id,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """
         This method will return all items in the specified project.
@@ -210,15 +227,18 @@ class JamaClient:
 
         """
         resource_path = "items"
-        params = {"project": project_id}
-        item_data = self.__get_all(
+        params = (
+            {"project": project_id}
+            if params is None
+            else {**params, "project": project_id}
+        )
+        return self.__get_all(
             resource_path,
-            params=params,
+            params,
             allowed_results_per_page=allowed_results_per_page,
         )
-        return item_data
 
-    def get_item(self, item_id):
+    def get_item(self, item_id: int, params: Optional[dict] = None):
         """
         This method will return a singular item of a specified item id
         Args:
@@ -229,14 +249,14 @@ class JamaClient:
         """
         resource_path = "items/" + str(item_id)
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
         JamaClient.__handle_response_status(response)
         return response.json()["data"]
 
-    def get_item_lock(self, item_id):
+    def get_item_lock(self, item_id: int, params: Optional[dict] = None):
         """
         Get the locked state, last locked date, and last locked by user for the item with the specified ID
         Args:
@@ -248,14 +268,14 @@ class JamaClient:
         """
         resource_path = "items/" + str(item_id) + "/lock"
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
         JamaClient.__handle_response_status(response)
         return response.json()["data"]
 
-    def put_item_lock(self, item_id, locked):
+    def put_item_lock(self, item_id: int, locked):
         """
         Update the locked state of the item with the specified ID
         Args:
@@ -270,18 +290,18 @@ class JamaClient:
             "locked": locked,
         }
         resource_path = "items/" + str(item_id) + "/lock"
-        headers = {"content-type": "application/json"}
         try:
-            response = self._core.put(
-                resource_path, data=json.dumps(body), headers=headers
-            )
+            response = self._core.put(resource_path, data=json.dumps(body))
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
         return self.__handle_response_status(response)
 
     def get_item_tags(
-        self, item_id, allowed_results_per_page=__allowed_results_per_page
+        self,
+        item_id,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """
         Return all tags for the item with the specified ID
@@ -294,12 +314,13 @@ class JamaClient:
 
         """
         resource_path = "items/" + str(item_id) + "/tags"
-        item_tags = self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+        return self.__get_all(
+            resource_path,
+            params,
+            allowed_results_per_page=allowed_results_per_page,
         )
-        return item_tags
 
-    def get_attachment(self, attachment_id):
+    def get_attachment(self, attachment_id: int, params: Optional[dict] = None):
         """
         This method will return a singular attachment of a specified attachment id
         Args:
@@ -310,7 +331,7 @@ class JamaClient:
         """
         resource_path = "attachments/" + str(attachment_id)
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
@@ -318,21 +339,27 @@ class JamaClient:
         return response.json()["data"]
 
     def get_abstract_items_from_doc_key(
-        self, doc_key_list, allowed_results_per_page=__allowed_results_per_page
+        self,
+        doc_key_list,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """DEPRECATED INSTEAD USE get_abstract_items below.
         This method will take in a list of document keys and return an array of JSON Objects associated with the
         document keys."""
         resource_path = "abstractitems"
-        params = {"documentKey": doc_key_list}
-        abstract_items = self.__get_all(
+        params = (
+            {"documentKey": doc_key_list}
+            if params is None
+            else {**params, "documentKey": doc_key_list}
+        )
+        return self.__get_all(
             resource_path,
-            params=params,
+            params,
             allowed_results_per_page=allowed_results_per_page,
         )
-        return abstract_items
 
-    def get_relationship_rule_sets(self):
+    def get_relationship_rule_sets(self, params: Optional[dict] = None):
         """
         This method will return all relationship rule sets across all projects of the Jama Connect instance.
 
@@ -340,10 +367,10 @@ class JamaClient:
 
         """
         resource_path = "relationshiprulesets/"
-        rule_sets = self.__get_all(resource_path)
+        rule_sets = self.__get_all(resource_path, params)
         return rule_sets
 
-    def get_relationship_rule_set(self, id):
+    def get_relationship_rule_set(self, id: int, params: Optional[dict] = None):
         """
         This method will return the relationship rule sets by id.
 
@@ -351,11 +378,13 @@ class JamaClient:
 
         """
         resource_path = "relationshiprulesets/" + str(id)
-        response = self._core.get(resource_path)
+        response = self._core.get(resource_path, params)
         JamaClient.__handle_response_status(response)
         return response.json()["data"]
 
-    def get_relationship_rule_set_projects(self, id):
+    def get_relationship_rule_set_projects(
+        self, id: int, params: Optional[dict] = None
+    ):
         """
         This method will return the projects that have a given relationship rule set defined.
 
@@ -363,11 +392,12 @@ class JamaClient:
 
         """
         resource_path = "relationshiprulesets/" + str(id) + "/projects"
-        projects = self.__get_all(resource_path)
-        return projects
+        return self.__get_all(resource_path, params)
 
     def get_relationship_types(
-        self, allowed_results_per_page=__allowed_results_per_page
+        self,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """
         This method will return all relationship types of the across all projects of the Jama Connect instance.
@@ -379,12 +409,15 @@ class JamaClient:
 
         """
         resource_path = "relationshiptypes/"
-        item_types = self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+        return self.__get_all(
+            resource_path,
+            params,
+            allowed_results_per_page=allowed_results_per_page,
         )
-        return item_types
 
-    def get_relationship_type(self, relationship_type_id):
+    def get_relationship_type(
+        self, relationship_type_id: int, params: Optional[dict] = None
+    ):
         """
         Gets relationship type information for a specific relationship type id.
 
@@ -396,14 +429,18 @@ class JamaClient:
         """
         resource_path = "relationshiptypes/" + str(relationship_type_id)
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
         JamaClient.__handle_response_status(response)
         return response.json()["data"]
 
-    def get_item_types(self, allowed_results_per_page=__allowed_results_per_page):
+    def get_item_types(
+        self,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
+    ):
         """
         This method will return all item types of the across all projects of the Jama Connect instance.
 
@@ -414,12 +451,13 @@ class JamaClient:
 
         """
         resource_path = "itemtypes/"
-        item_types = self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+        return self.__get_all(
+            resource_path,
+            params,
+            allowed_results_per_page=allowed_results_per_page,
         )
-        return item_types
 
-    def get_item_type(self, item_type_id):
+    def get_item_type(self, item_type_id: int, params: Optional[dict] = None):
         """
         Gets item type information for a specific item type id.
 
@@ -439,7 +477,10 @@ class JamaClient:
         return response.json()["data"]
 
     def get_items_synceditems(
-        self, item_id, allowed_results_per_page=__allowed_results_per_page
+        self,
+        item_id: int,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """
         Get all synchronized items for the item with the specified ID
@@ -453,12 +494,15 @@ class JamaClient:
 
         """
         resource_path = "items/" + str(item_id) + "/synceditems"
-        synced_items = self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+        return self.__get_all(
+            resource_path,
+            params,
+            allowed_results_per_page=allowed_results_per_page,
         )
-        return synced_items
 
-    def get_items_synceditems_status(self, item_id, synced_item_id):
+    def get_items_synceditems_status(
+        self, item_id: int, synced_item_id: int, params: Optional[dict] = None
+    ):
         """
         Get the sync status for the synced item with the specified ID
 
@@ -469,22 +513,17 @@ class JamaClient:
         Returns: The response JSON from the API which contains a single field 'inSync' with a boolean value.
 
         """
-        resource_path = (
-            "items/"
-            + str(item_id)
-            + "/synceditems/"
-            + str(synced_item_id)
-            + "/syncstatus"
-        )
+
+        resource_path = f"items/{item_id}/synceditems/{synced_item_id}/syncstatus"
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
         JamaClient.__handle_response_status(response)
         return response.json()["data"]
 
-    def get_item_versions(self, item_id):
+    def get_item_versions(self, item_id: int, params: Optional[dict] = None):
         """
         Get all versions for the item with the specified ID
 
@@ -493,11 +532,12 @@ class JamaClient:
 
         Returns: JSON array with all versions for the item
         """
-        resource_path = "items/" + str(item_id) + "/versions"
-        versions = self.__get_all(resource_path)
-        return versions
+        resource_path = f"items/{item_id}/versions"
+        return self.__get_all(resource_path, params)
 
-    def get_item_version(self, item_id, version_num):
+    def get_item_version(
+        self, item_id: int, version_num: int, params: Optional[dict] = None
+    ):
         """
         Get the numbered version for the item with the specified ID
 
@@ -507,16 +547,18 @@ class JamaClient:
 
         Returns: a dictionary object representing the numbered version
         """
-        resource_path = "items/" + str(item_id) + "/versions/" + str(version_num)
+        resource_path = f"items/{item_id}/versions/{version_num}"
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
         JamaClient.__handle_response_status(response)
         return response.json()["data"]
 
-    def get_versioned_item(self, item_id, version_num):
+    def get_versioned_item(
+        self, item_id: int, version_num: int, params: Optional[dict] = None
+    ):
         """
         Get the snapshot of the item at the specified version
 
@@ -526,11 +568,10 @@ class JamaClient:
 
         Returns: a dictionary object representing the versioned item
         """
-        resource_path = (
-            "items/" + str(item_id) + "/versions/" + str(version_num) + "/versioneditem"
-        )
+
+        resource_path = f"items/{item_id}/versions/{version_num}/versioneditem"
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
@@ -538,7 +579,10 @@ class JamaClient:
         return response.json()["data"]
 
     def get_item_versions(
-        self, item_id, allowed_results_per_page=__allowed_results_per_page
+        self,
+        item_id,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """
         Get all versions for the item with the specified ID
@@ -549,13 +593,16 @@ class JamaClient:
 
         Returns: JSON array with all versions for the item
         """
-        resource_path = "items/" + str(item_id) + "/versions"
-        versions = self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+        resource_path = f"items/{item_id}/versions"
+        return self.__get_all(
+            resource_path,
+            params,
+            allowed_results_per_page=allowed_results_per_page,
         )
-        return versions
 
-    def get_item_version(self, item_id, version_num):
+    def get_item_version(
+        self, item_id: int, version_num: int, params: Optional[dict] = None
+    ):
         """
         Get the numbered version for the item with the specified ID
 
@@ -565,12 +612,14 @@ class JamaClient:
 
         Returns: a dictionary object representing the numbered version
         """
-        resource_path = "items/" + str(item_id) + "/versions/" + str(version_num)
-        response = self._core.get(resource_path)
+        resource_path = f"items/{item_id}/versions/{version_num}"
+        response = self._core.get(resource_path, params)
         JamaClient.__handle_response_status(response)
         return response.json()["data"]
 
-    def get_versioned_item(self, item_id, version_num):
+    def get_versioned_item(
+        self, item_id: int, version_num: int, params: Optional[dict] = None
+    ):
         """
         Get the snapshot of the item at the specified version
 
@@ -580,14 +629,16 @@ class JamaClient:
 
         Returns: a dictionary object representing the versioned item
         """
-        resource_path = (
-            "items/" + str(item_id) + "/versions/" + str(version_num) + "/versioneditem"
-        )
-        response = self._core.get(resource_path)
+        resource_path = f"items/{item_id}/versions/{version_num}/versioneditem"
+        response = self._core.get(resource_path, params)
         JamaClient.__handle_response_status(response)
         return response.json()["data"]
 
-    def get_pick_lists(self, allowed_results_per_page=__allowed_results_per_page):
+    def get_pick_lists(
+        self,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
+    ):
         """
         Returns a list of all the pick lists
 
@@ -598,12 +649,13 @@ class JamaClient:
 
         """
         resource_path = "picklists/"
-        pick_lists = self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+        return self.__get_all(
+            resource_path,
+            params,
+            allowed_results_per_page=allowed_results_per_page,
         )
-        return pick_lists
 
-    def get_pick_list(self, pick_list_id):
+    def get_pick_list(self, pick_list_id: int, params: Optional[dict] = None):
         """
         Gets all a singular picklist
 
@@ -613,9 +665,9 @@ class JamaClient:
         Returns: a dictionary object representing the picklist.
 
         """
-        resource_path = "picklists/" + str(pick_list_id)
+        resource_path = f"picklists/{pick_list_id}"
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
@@ -623,7 +675,10 @@ class JamaClient:
         return response.json()["data"]
 
     def get_pick_list_options(
-        self, pick_list_id, allowed_results_per_page=__allowed_results_per_page
+        self,
+        pick_list_id: int,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """
         Gets all all the picklist options for a single picklist
@@ -634,13 +689,14 @@ class JamaClient:
         Returns: an array of dictionary objects that represent the picklist options.
 
         """
-        resource_path = "picklists/" + str(pick_list_id) + "/options"
-        pick_list_options = self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+        resource_path = f"picklists/{pick_list_id}/options"
+        return self.__get_all(
+            resource_path, params, allowed_results_per_page=allowed_results_per_page
         )
-        return pick_list_options
 
-    def get_pick_list_option(self, pick_list_option_id):
+    def get_pick_list_option(
+        self, pick_list_option_id: int, params: Optional[dict] = None
+    ):
         """
         Fetches a single picklist option from the API
         Args:
@@ -649,9 +705,9 @@ class JamaClient:
         Returns: A dictonary object representing the picklist option.
 
         """
-        resource_path = "picklistoptions/" + str(pick_list_option_id)
+        resource_path = f"picklistoptions/{pick_list_option_id}"
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
@@ -659,7 +715,10 @@ class JamaClient:
         return response.json()["data"]
 
     def get_relationships(
-        self, project_id, allowed_results_per_page=__allowed_results_per_page
+        self,
+        project_id: int,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """
         Returns a list of all relationships of a specified project
@@ -672,15 +731,18 @@ class JamaClient:
 
         """
         resource_path = "relationships"
-        params = {"project": project_id}
-        relationship_data = self.__get_all(
+        params = (
+            {"project": project_id}
+            if params is None
+            else {**params, "project": project_id}
+        )
+        return self.__get_all(
             resource_path,
-            params=params,
+            params,
             allowed_results_per_page=allowed_results_per_page,
         )
-        return relationship_data
 
-    def get_relationship(self, relationship_id):
+    def get_relationship(self, relationship_id: int, params: Optional[dict] = None):
         """
         Returns a specific relationship object of a specified relationship ID
 
@@ -690,9 +752,9 @@ class JamaClient:
         Returns: a dictionary object that represents a relationship
 
         """
-        resource_path = "relationships/" + str(relationship_id)
+        resource_path = f"relationships/{relationship_id}"
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
@@ -761,10 +823,9 @@ class JamaClient:
         if sort_by is not None:
             params["sortBy"] = sort_by
 
-        abstract_items = self.__get_all(resource_path, params=params)
-        return abstract_items
+        return self.__get_all(resource_path, params=params)
 
-    def get_abstract_item(self, item_id):
+    def get_abstract_item(self, item_id: int, params: Optional[dict] = None):
         """
         This method will return an item, test plan, test cycle, test run, or attachment with the specified ID
         Args:
@@ -773,16 +834,16 @@ class JamaClient:
         Returns: a dictonary object representing the abstract item
 
         """
-        resource_path = "abstractitems/" + str(item_id)
+        resource_path = f"abstractitems/{item_id}"
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
         JamaClient.__handle_response_status(response)
         return response.json()["data"]
 
-    def get_abstract_item_versions(self, item_id):
+    def get_abstract_item_versions(self, item_id: int, params: Optional[dict] = None):
         """
         Get all versions for the item with the specified ID
 
@@ -791,11 +852,12 @@ class JamaClient:
 
         Returns: JSON array with all versions for the item
         """
-        resource_path = "abstractitems/" + str(item_id) + "/versions"
-        versions = self.__get_all(resource_path)
-        return versions
+        resource_path = f"abstractitems/{item_id}/versions"
+        return self.__get_all(resource_path, params)
 
-    def get_abtract_item_version(self, item_id, version_num):
+    def get_abtract_item_version(
+        self, item_id: int, version_num: int, paras: Optional[dict] = None
+    ):
         """
         Get the numbered version for the item with the specified ID
 
@@ -805,18 +867,19 @@ class JamaClient:
 
         Returns: a dictionary object representing the numbered version
         """
-        resource_path = (
-            "abstractitems/" + str(item_id) + "/versions/" + str(version_num)
-        )
+
+        resource_path = f"abstractitems/{item_id}/versions/{version_num}"
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
         JamaClient.__handle_response_status(response)
         return response.json()["data"]
 
-    def get_abstract_versioned_item(self, item_id, version_num):
+    def get_abstract_versioned_item(
+        self, item_id: int, version_num: int, params: Optional[dict] = None
+    ):
         """
         Get the snapshot of the item at the specified version
 
@@ -826,15 +889,10 @@ class JamaClient:
 
         Returns: a dictionary object representing the versioned item
         """
-        resource_path = (
-            "abstractitems/"
-            + str(item_id)
-            + "/versions/"
-            + str(version_num)
-            + "/versioneditem"
-        )
+
+        resource_path = f"abstractitems/{item_id}/versions/{version_num}/versioneditem"
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
@@ -842,7 +900,10 @@ class JamaClient:
         return response.json()["data"]
 
     def get_item_children(
-        self, item_id, allowed_results_per_page=__allowed_results_per_page
+        self,
+        item_id: int,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """
         This method will return list of the child items of the item passed to the function.
@@ -852,25 +913,33 @@ class JamaClient:
 
         Returns: a List of Objects that represent the children of the item passed in.
         """
-        resource_path = "items/" + str(item_id) + "/children"
-        child_items = self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+        resource_path = f"items/{item_id}/children"
+        return self.__get_all(
+            resource_path,
+            params,
+            allowed_results_per_page=allowed_results_per_page,
         )
-        return child_items
 
     def get_testruns(
-        self, test_cycle_id, allowed_results_per_page=__allowed_results_per_page
+        self,
+        test_cycle_id: int,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """This method will return all test runs associated with the specified test cycle.  Test runs will be returned
         as a list of json objects."""
-        resource_path = "testcycles/" + str(test_cycle_id) + "/testruns"
-        testrun_data = self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+        resource_path = f"testcycles/{test_cycle_id}/testruns"
+        return self.__get_all(
+            resource_path,
+            params,
+            allowed_results_per_page=allowed_results_per_page,
         )
-        return testrun_data
 
     def get_items_upstream_relationships(
-        self, item_id, allowed_results_per_page=__allowed_results_per_page
+        self,
+        item_id: int,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """
         Returns a list of all the upstream relationships for the item with the specified ID.
@@ -881,13 +950,18 @@ class JamaClient:
         Returns: an array of dictionary objects that represent the upstream relationships for the item.
 
         """
-        resource_path = "items/" + str(item_id) + "/upstreamrelationships"
+        resource_path = f"items/{item_id}/upstreamrelationships"
         return self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+            resource_path,
+            params,
+            allowed_results_per_page=allowed_results_per_page,
         )
 
     def get_items_downstream_related(
-        self, item_id, allowed_results_per_page=__allowed_results_per_page
+        self,
+        item_id: int,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """
         Returns a list of all the downstream related items for the item with the specified ID.
@@ -899,13 +973,18 @@ class JamaClient:
         Returns: an array of dictionary objects that represent the downstream related items for the specified item.
 
         """
-        resource_path = "items/" + str(item_id) + "/downstreamrelated"
+        resource_path = f"items/{item_id}/downstreamrelated"
         return self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+            resource_path,
+            params,
+            allowed_results_per_page=allowed_results_per_page,
         )
 
     def get_items_downstream_relationships(
-        self, item_id, allowed_results_per_page=__allowed_results_per_page
+        self,
+        item_id: int,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """
         Returns a list of all the downstream relationships for the item with the specified ID.
@@ -916,12 +995,12 @@ class JamaClient:
         Returns: an array of dictionary objects that represent the downstream relationships for the item.
 
         """
-        resource_path = "items/" + str(item_id) + "/downstreamrelationships"
+        resource_path = f"items/{item_id}/downstreamrelationships"
         return self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+            resource_path, params, allowed_results_per_page=allowed_results_per_page
         )
 
-    def get_items_upstream_related(self, item_id):
+    def get_items_upstream_related(self, item_id: int, params: Optional[dict] = None):
         """
         Returns a list of all the upstream related items for the item with the specified ID.
 
@@ -931,10 +1010,12 @@ class JamaClient:
         Returns: an array of dictionary objects that represent the upstream related items for the specified item.
 
         """
-        resource_path = "items/" + str(item_id) + "/upstreamrelated"
-        return self.__get_all(resource_path)
+        resource_path = f"items/{item_id}/upstreamrelated"
+        return self.__get_all(resource_path, params)
 
-    def get_item_workflow_transitions(self, item_id):
+    def get_item_workflow_transitions(
+        self, item_id: int, params: Optional[dict] = None
+    ):
         """
         Get all valid workflow transitions that can be made with the specified id
 
@@ -945,10 +1026,15 @@ class JamaClient:
         Returns: an array of dictionary objects that represent the workflow transitions for the item.
 
         """
-        resource_path = "items/" + str(item_id) + "/workflowtransitionoptions"
-        return self.__get_all(resource_path)
+        resource_path = f"items/{item_id}/workflowtransitionoptions"
+        return self.__get_all(resource_path, params)
 
-    def get_tags(self, project, allowed_results_per_page=__allowed_results_per_page):
+    def get_tags(
+        self,
+        project_id: int,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
+    ):
         """
         Get all tags for the project with the specified id
         Args:
@@ -959,16 +1045,22 @@ class JamaClient:
 
         """
         resource_path = "tags"
-        params = {"project": project}
-        tag_data = self.__get_all(
+        params = (
+            {"project": project_id}
+            if params is None
+            else {**params, "project": project_id}
+        )
+        return self.__get_all(
             resource_path,
             params=params,
             allowed_results_per_page=allowed_results_per_page,
         )
-        return tag_data
 
     def get_tagged_items(
-        self, tag_id, allowed_results_per_page=__allowed_results_per_page
+        self,
+        tag_id: int,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
     ):
         """
         Get all items tagged with the specified ID
@@ -981,16 +1073,18 @@ class JamaClient:
             A List of items that match the tag.
 
         """
-        resource_path = "tags/" + str(tag_id) + "/items"
-        params = None
-        tag_results = self.__get_all(
+        resource_path = f"tags/{tag_id}/items"
+        return self.__get_all(
             resource_path,
             params=params,
             allowed_results_per_page=allowed_results_per_page,
         )
-        return tag_results
 
-    def get_users(self, allowed_results_per_page=__allowed_results_per_page):
+    def get_users(
+        self,
+        params: Optional[dict] = None,
+        allowed_results_per_page=__allowed_results_per_page,
+    ):
         """
         Gets a list of all active users visible to the current user
 
@@ -1001,12 +1095,13 @@ class JamaClient:
 
         """
         resource_path = "users/"
-        users = self.__get_all(
-            resource_path, allowed_results_per_page=allowed_results_per_page
+        return self.__get_all(
+            resource_path,
+            params,
+            allowed_results_per_page=allowed_results_per_page,
         )
-        return users
 
-    def get_user(self, user_id):
+    def get_user(self, user_id: int, params: Optional[dict] = None):
         """
         Gets a single speificed user
 
@@ -1016,15 +1111,15 @@ class JamaClient:
         Returns: JSON obect
 
         """
-        resource_path = "users/" + str(user_id)
+        resource_path = f"users/{user_id}"
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
         return response.json()["data"]
 
-    def get_current_user(self):
+    def get_current_user(self, params: Optional[dict] = None):
         """
         Gets a current user
 
@@ -1033,13 +1128,13 @@ class JamaClient:
         """
         resource_path = "users/current"
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
         return response.json()["data"]
 
-    def get_test_cycle(self, test_cycle_id):
+    def get_test_cycle(self, test_cycle_id: int, params: Optional[dict] = None):
         """
         This method will return JSON data about the test cycle specified by the test cycle id.
 
@@ -1049,16 +1144,16 @@ class JamaClient:
         Returns: a dictionary object that represents the test cycle
 
         """
-        resource_path = "testcycles/" + str(test_cycle_id)
+        resource_path = f"testcycles/{test_cycle_id}"
         try:
-            response = self._core.get(resource_path)
+            response = self._core.get(resource_path, params)
         except CoreException as err:
             py_jama_rest_client_logger.error(err)
             raise APIException(str(err))
         JamaClient.__handle_response_status(response)
         return response.json()["data"]
 
-    def delete_item(self, item_id):
+    def delete_item(self, item_id: int):
         """
         This method will delete an item in Jama Connect.
 
@@ -1067,7 +1162,7 @@ class JamaClient:
 
         Returns: The success status code.
         """
-        resource_path = "items/" + str(item_id)
+        resource_path = f"items/{item_id}"
         try:
             response = self._core.delete(resource_path)
         except CoreException as err:
@@ -1076,7 +1171,7 @@ class JamaClient:
         JamaClient.__handle_response_status(response)
         return response.status_code
 
-    def delete_relationships(self, relationship_id):
+    def delete_relationships(self, relationship_id: int):
         """
         Deletes a relationship with the specified relationship ID
 
@@ -1086,7 +1181,7 @@ class JamaClient:
         Returns: The success status code.
 
         """
-        resource_path = "relationships/" + str(relationship_id)
+        resource_path = f"relationships/{relationship_id}"
         try:
             response = self._core.delete(resource_path)
         except CoreException as err:
